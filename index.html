@@ -396,9 +396,46 @@
     font-size: 1.8rem;
     color: #c0507a;
   }
+
+  .music-btn {
+    position: fixed;
+    bottom: 1.5rem;
+    right: 1.5rem;
+    z-index: 100;
+    background: white;
+    border: 2px solid #ffb3c6;
+    border-radius: 50%;
+    width: 48px;
+    height: 48px;
+    font-size: 1.4rem;
+    cursor: pointer;
+    box-shadow: 0 4px 15px rgba(192,80,122,0.15);
+    transition: transform 0.2s, box-shadow 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    animation: fadeUp 1s ease 2s both;
+  }
+  .music-btn:hover {
+    transform: scale(1.1);
+    box-shadow: 0 6px 20px rgba(192,80,122,0.25);
+  }
+  .music-btn.playing {
+    animation: fadeUp 1s ease 2s both, pulse 2s ease-in-out infinite;
+  }
+  @keyframes pulse {
+    0%, 100% { box-shadow: 0 4px 15px rgba(192,80,122,0.15); }
+    50% { box-shadow: 0 4px 25px rgba(192,80,122,0.4); }
+  }
 </style>
 </head>
 <body>
+
+
+<audio id="bgMusic" loop>
+  <source src="music.mp3" type="audio/mpeg">
+</audio>
+<button class="music-btn" id="musicBtn" onclick="toggleMusic()" title="toggle music">🎵</button>
 
 <div class="floating-hearts" id="heartsContainer"></div>
 
@@ -501,6 +538,44 @@
 <script>
   const answers = { q1: '', q2: '', q3: '', q4: '' };
 
+  let musicStarted = false;
+  const MUSIC_START = 20;
+
+  function toggleMusic() {
+    const audio = document.getElementById('bgMusic');
+    const btn = document.getElementById('musicBtn');
+    if (audio.paused) {
+      audio.volume = 0.84;
+      audio.play();
+      btn.textContent = '🔈';
+      btn.classList.add('playing');
+    } else {
+      audio.pause();
+      btn.textContent = '🎵';
+      btn.classList.remove('playing');
+    }
+  }
+
+  document.getElementById('bgMusic').addEventListener('canplay', function() {
+    if (!musicStarted) {
+      this.currentTime = MUSIC_START;
+    }
+  }, { once: true });
+
+  document.addEventListener('click', function startOnFirstClick() {
+    const audio = document.getElementById('bgMusic');
+    if (!musicStarted && audio.paused) {
+      audio.currentTime = MUSIC_START;
+      audio.volume = 0.84;
+      audio.play().then(() => {
+        document.getElementById('musicBtn').textContent = '🔈';
+        document.getElementById('musicBtn').classList.add('playing');
+        musicStarted = true;
+      }).catch(() => {});
+    }
+    document.removeEventListener('click', startOnFirstClick);
+  }, { once: false });
+
   function createHearts() {
     const container = document.getElementById('heartsContainer');
     const emojis = ['💗','🤍','💕','🌸','✨','💫','🌷'];
@@ -573,19 +648,21 @@
     btn.disabled = true;
 
     try {
+      const formData = new FormData();
+      formData.append('smiling', answers.q1);
+      formData.append('safe_space', answers.q2);
+      formData.append('open_up', answers.q3);
+      formData.append('hug', answers.q4);
+      formData.append('_subject', 'white cat answered you');
+
       const res = await fetch('https://formspree.io/f/xeewoavn', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
-        body: JSON.stringify({
-          '1. Are you smiling?': answers.q1,
-          '2. Are we still each others safe space?': answers.q2,
-          '3. Will you be able to open up now?': answers.q3,
-          '4. Do you want a hug?': answers.q4,
-          '_subject': 'white cat answered you'
-        })
+        headers: { 'Accept': 'application/json' },
+        body: formData
       });
 
-      if (res.ok) {
+      const data = await res.json();
+      if (res.ok && data.ok) {
         const qs = document.getElementById('questionsSection');
         const sent = document.getElementById('sentMessage');
         qs.style.opacity = '0';
@@ -599,10 +676,12 @@
           }
         }, 400);
       } else {
+        console.error('Formspree responded:', JSON.stringify(data));
         btn.textContent = 'try again 💗';
         btn.disabled = false;
       }
     } catch (e) {
+      console.error('Network error:', e.message);
       btn.textContent = 'try again 💗';
       btn.disabled = false;
     }
