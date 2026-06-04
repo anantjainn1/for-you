@@ -396,37 +396,6 @@
     font-size: 1.8rem;
     color: #c0507a;
   }
-
-  .music-btn {
-    position: fixed;
-    bottom: 1.5rem;
-    right: 1.5rem;
-    z-index: 100;
-    background: white;
-    border: 2px solid #ffb3c6;
-    border-radius: 50%;
-    width: 48px;
-    height: 48px;
-    font-size: 1.4rem;
-    cursor: pointer;
-    box-shadow: 0 4px 15px rgba(192,80,122,0.15);
-    transition: transform 0.2s, box-shadow 0.2s;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    animation: fadeUp 1s ease 2s both;
-  }
-  .music-btn:hover {
-    transform: scale(1.1);
-    box-shadow: 0 6px 20px rgba(192,80,122,0.25);
-  }
-  .music-btn.playing {
-    animation: fadeUp 1s ease 2s both, pulse 2s ease-in-out infinite;
-  }
-  @keyframes pulse {
-    0%, 100% { box-shadow: 0 4px 15px rgba(192,80,122,0.15); }
-    50% { box-shadow: 0 4px 25px rgba(192,80,122,0.4); }
-  }
 </style>
 </head>
 <body>
@@ -435,7 +404,7 @@
 <audio id="bgMusic" loop>
   <source src="music.mp3" type="audio/mpeg">
 </audio>
-<button class="music-btn" id="musicBtn" onclick="toggleMusic()" title="toggle music">🎵</button>
+
 
 <div class="floating-hearts" id="heartsContainer"></div>
 
@@ -541,21 +510,6 @@
   let musicStarted = false;
   const MUSIC_START = 20;
 
-  function toggleMusic() {
-    const audio = document.getElementById('bgMusic');
-    const btn = document.getElementById('musicBtn');
-    if (audio.paused) {
-      audio.volume = 0.84;
-      audio.play();
-      btn.textContent = '🔈';
-      btn.classList.add('playing');
-    } else {
-      audio.pause();
-      btn.textContent = '🎵';
-      btn.classList.remove('playing');
-    }
-  }
-
   document.getElementById('bgMusic').addEventListener('canplay', function() {
     if (!musicStarted) {
       this.currentTime = MUSIC_START;
@@ -568,8 +522,6 @@
       audio.currentTime = MUSIC_START;
       audio.volume = 0.84;
       audio.play().then(() => {
-        document.getElementById('musicBtn').textContent = '🔈';
-        document.getElementById('musicBtn').classList.add('playing');
         musicStarted = true;
       }).catch(() => {});
     }
